@@ -16,6 +16,11 @@ app = FastAPI(title="Family Chatbot (Groq only)")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
+@app.get("/health")
+async def health() -> dict:
+    return {"status": "ok"}
+
+
 class ChatMessage(BaseModel):
     role: str
     content: str
@@ -32,7 +37,11 @@ class ChatResponse(BaseModel):
 
 @app.get("/")
 async def index() -> FileResponse:
-    return FileResponse(STATIC / "index.html")
+    return FileResponse(
+        STATIC / "index.html",
+        media_type="text/html; charset=utf-8",
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.post("/api/chat", response_model=ChatResponse)
