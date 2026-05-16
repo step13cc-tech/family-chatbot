@@ -23,7 +23,8 @@
 <body>
   <h1>家族チャット</h1>
   <p class="hint">Groq のみ・音声なし。会話はこのブラウザにだけ保存（DB なし）。</p>
-  <div id="log"></div>
+  <div id="log"><p class="hint">ここに会話が表示されます。</p></div>
+  <p id="status" class="hint">読み込み中…</p>
   <form id="form">
     <input id="input" type="text" placeholder="メッセージを入力…" autocomplete="off" required />
     <button type="submit" id="send">送信</button>
@@ -37,14 +38,28 @@
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
     const clearBtn = document.getElementById("clear");
+    const status = document.getElementById("status");
 
-    let history = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    let history = [];
+    try {
+      history = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      if (!Array.isArray(history)) history = [];
+    } catch {
+      history = [];
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
+    if (status) status.textContent = "準備完了 — メッセージを入力して送信";
 
     function save() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
     }
 
     function render() {
+      if (history.length === 0) {
+        log.innerHTML = '<p class="hint">ここに会話が表示されます。下にメッセージを入力して送信してください。</p>';
+        return;
+      }
       log.innerHTML = history.map((m) =>
         `<div class="msg ${m.role === "user" ? "user" : "bot"}">` +
         `<strong>${m.role === "user" ? "あなた" : "ボット"}:</strong> ` +
