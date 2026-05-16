@@ -3,17 +3,11 @@ services:
     name: family-chatbot
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: GROQ_API_KEY
         sync: false
       - key: GROQ_MODEL
         value: llama-3.3-70b-versatile
-      - key: BOT_NAME
-        value: 家族ボット
-      - key: BOT_PERSONALITY
-        value: やさしく、短めに、日本語で話す家族のような口調
-      - key: PYTHON_VERSION
-        value: "3.12.7"

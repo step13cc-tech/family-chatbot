@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.llm import chat_completion
+from app.models import AVAILABLE_MODELS, default_model_id, resolve_model
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / "static"
@@ -21,6 +22,14 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
+@app.get("/api/models")
+async def list_models() -> dict:
+    return {
+        "models": AVAILABLE_MODELS,
+        "default": default_model_id(),
+    }
+
+
 class ChatMessage(BaseModel):
     role: str
     content: str
@@ -29,10 +38,12 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     history: list[ChatMessage] = Field(default_factory=list, max_length=50)
+    model: str | None = None
 
 
 class ChatResponse(BaseModel):
     reply: str
+    model: str
 
 
 @app.get("/")
@@ -48,7 +59,7 @@ async def index() -> FileResponse:
 async def chat(body: ChatRequest) -> ChatResponse:
     try:
         history = [{"role": m.role, "content": m.content} for m in body.history]
-        reply = await chat_completion(history, body.message)
-        return ChatResponse(reply=reply)
+        reply, model_id = await chat_completion(history, body.message, body.model)
+        return ChatResponse(reply=reply, model=model_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
